@@ -40,7 +40,6 @@ namespace YourTube_Downloader
             };
 
             /* Initialize variables */
-            this.SizeToContent = SizeToContent.Width;
             this.SizeToContent = SizeToContent.Height;
 
 

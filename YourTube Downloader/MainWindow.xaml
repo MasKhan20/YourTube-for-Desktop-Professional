@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:YourTube_Downloader"
         mc:Ignorable="d"
         Title="YourTube Downloader"
-        Height="393" Width="356">
+        Height="393" Width="400">
     <Grid Background="{Binding UIBGColor}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -34,8 +34,13 @@
 
 
         <StackPanel Orientation="Vertical" Margin="20,5,20,0" Grid.Row="2">
-            <Label Content="Video URL"  FontWeight="Bold" HorizontalAlignment="Stretch" Height="26" VerticalAlignment="Top"/>
-            <TextBox Name="YTVideoID" HorizontalAlignment="Stretch" Height="23" TextWrapping="NoWrap" VerticalAlignment="Top"/>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Video URL"  FontWeight="Bold" HorizontalAlignment="Stretch" Height="26" VerticalAlignment="Top"/>
+                <CheckBox Content="Multiple links" IsChecked="{Binding MultipleLinks}" VerticalAlignment="Center" Margin="5"/>
+            </StackPanel>
+            <Grid>
+                <TextBox Name="YTVideoID" HorizontalAlignment="Stretch" Height="23" VerticalScrollBarVisibility="Visible" VerticalAlignment="Top"/>
+            </Grid>
         </StackPanel>
 
 
@@ -72,7 +77,10 @@
                 <Label Content="Download Status: " FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110"/>
                 <Label Name="StatusLabel" Content="" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="26"/>
             </StackPanel>
-            <ProgressBar Name="YTProgress" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top"/>
+            <Grid>
+                <ProgressBar Name="YTProgress" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top"/>
+                <Label Content="{Binding DownloadPercent}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Grid>
         </StackPanel>
 
 

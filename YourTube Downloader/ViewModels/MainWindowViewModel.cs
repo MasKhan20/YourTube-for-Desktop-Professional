@@ -25,18 +25,18 @@ namespace YourTube_Downloader.ViewModels
         public ICommand BrowseCommand => new RelayCommand(BrowseButton_Command);
         public ICommand ViewLogCommand => new RelayCommand(ViewLogButton_Command);
 
-        public ICommand DownloadCommand => new RelayCommand(async () => await Download(
+        public ICommand DownloadCommand => new RelayCommand(async () => await Task.Run(() => Download(
             ViewProperty.YTVideoURL, 
             ViewProperty.YTAudioButton,
             ViewProperty.YTLocation,
             
             ViewProperty.YTStatusLabel,
             ViewProperty.YTProgressBar,
-            ViewProperty.YTDownloadButton));
+            ViewProperty.YTDownloadButton)));
         #endregion
 
 
-        #region Properties
+        #region Binding Properties
         private string _uIBGColor;
         public string UIBGColor
         {
@@ -56,6 +56,35 @@ namespace YourTube_Downloader.ViewModels
         {
             get { return _downloadDir; }
             set { Set(() => DownloadDir, ref _downloadDir, value); }
+        }
+
+        private bool _multipleLinks;
+        public bool MultipleLinks
+        {
+            get { return _multipleLinks; }
+            set
+            {
+                Set(() => MultipleLinks, ref _multipleLinks, value);
+                if (MultipleLinks == true)
+                {
+                    ViewProperty.YTVideoURL.TextWrapping = TextWrapping.Wrap;
+                    ViewProperty.YTVideoURL.AcceptsReturn = true;
+                    ViewProperty.YTVideoURL.Height = 138;
+                }
+                else
+                {
+                    ViewProperty.YTVideoURL.TextWrapping = TextWrapping.NoWrap;
+                    ViewProperty.YTVideoURL.AcceptsReturn = false;
+                    ViewProperty.YTVideoURL.Height = 23;
+                }
+            }
+        }
+
+        private string _downloadPercent;
+        public string DownloadPercent
+        {
+            get { return _downloadPercent; }
+            set { Set(() => DownloadPercent, ref _downloadPercent, value); }
         }
 
         public UIElements ViewProperty { get; set; }
@@ -117,7 +146,7 @@ namespace YourTube_Downloader.ViewModels
             try
             {
                 var extension = (format == "Audio") ? "mp3" : "mp4";
-                await ExecuteDownload(yTStatusLabel, yTProgressBar, yTDownloadButton, link, format, extension, location);
+                await Task.Run(() => ExecuteDownload(yTStatusLabel, yTProgressBar, yTDownloadButton, link, format, extension, location));
                 MessageBox.Show($"Downloaded {format.ToLower()} to:\n{location}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (System.Net.Http.HttpRequestException)
@@ -159,7 +188,7 @@ namespace YourTube_Downloader.ViewModels
             return true;
         }
 
-        private async Task ExecuteDownload(Label yTStatusLabel, ProgressBar yTProgressBar, Button yTDownloadButton, string link, string format, string extension, string location)
+        private void ExecuteDownload(Label yTStatusLabel, ProgressBar yTProgressBar, Button yTDownloadButton, string link, string format, string extension, string location)
         {
             var youTube = YouTube.Default;
             var video = youTube.GetVideo(link);
@@ -168,50 +197,64 @@ namespace YourTube_Downloader.ViewModels
 
             yTStatusLabel.Content = "Downloading content";
 
-            byte[] videoBytes = await video.GetBytesAsync();
+            byte[] videoBytes = video.GetBytes();
             var videoFileByteLength = videoBytes.Length;
 
             using (FileStream dFile = File.OpenWrite(fullFileName))
             {
-                await dFile.WriteAsync(videoBytes, 0, videoFileByteLength);
+                dFile.Write(videoBytes, 0, videoFileByteLength);
             }
 
             yTStatusLabel.Content = $"Converting to {extension}";
 
             var infile = new MediaToolkit.Model.MediaFile { Filename = fullFileName };
-            var outfile = new MediaToolkit.Model.MediaFile { Filename = $"{System.IO.Path.Combine(location, RemoveIllegalPathCharacters(video.Title.Replace(" - YouTube", "")))}.mp3" };
+            var outfile = new MediaToolkit.Model.MediaFile { Filename = $"{System.IO.Path.Combine(location, RemoveIllegalPathCharacters(video.Title.Replace(" - YouTube", "")))}.{extension}" };
 
             if (!fullFileName.ToLower().EndsWith(extension))
             {
-                await MakeConvertRequest(infile, outfile);
+                Convert(infile, outfile);
             }
 
             yTDownloadButton.IsEnabled = true;
-            yTProgressBar.IsIndeterminate = false;
             yTProgressBar.Value = 100;
             yTStatusLabel.Content = $"Done! Downloaded: {Converter.GetSize(videoBytes)}";
 
             YourTube_Downloader.Setting.AppSettings.AddDownloadUsageBytes(videoBytes);
         }
 
-        private async Task MakeConvertRequest(MediaToolkit.Model.MediaFile inFile, MediaToolkit.Model.MediaFile outFile)
-        {
-            var backgroundTask = Task.Run(() => Convert(inFile, outFile));
-            await backgroundTask;
-        }
-
-        public static void Convert(MediaToolkit.Model.MediaFile inFile, MediaToolkit.Model.MediaFile outFile)
+        public void Convert(MediaToolkit.Model.MediaFile inFile, MediaToolkit.Model.MediaFile outFile)
         {
             using (var engine = new MediaToolkit.Engine())
             {
-                engine.GetMetadata(inFile);
+                ViewProperty.YTProgressBar.IsIndeterminate = false;
+                //Subscribe
+                engine.ConvertProgressEvent += Engine_ConvertProgressEvent;
+                engine.ConversionCompleteEvent += Engine_ConversionCompleteEvent;
 
-                engine.Convert(inFile, outFile);
+                Task.Run(() => engine.Convert(inFile, outFile));
                 if (File.Exists(inFile.Filename))
                 {
                     File.Delete(inFile.Filename);
                 }
+                
+                //Unsubscribe
+                engine.ConvertProgressEvent -= Engine_ConvertProgressEvent;
+                engine.ConversionCompleteEvent -= Engine_ConversionCompleteEvent;
             }
+        }
+
+        private void Engine_ConversionCompleteEvent(object sender, MediaToolkit.ConversionCompleteEventArgs e)
+        {
+            var value = (e.ProcessedDuration.TotalSeconds / e.TotalDuration.TotalSeconds * 100);
+            ViewProperty.YTProgressBar.Value = value;
+            DownloadPercent = $"{value} % Complete";
+        }
+
+        private void Engine_ConvertProgressEvent(object sender, MediaToolkit.ConvertProgressEventArgs e)
+        {
+            var value = (e.ProcessedDuration.TotalSeconds / e.TotalDuration.TotalSeconds * 100);
+            ViewProperty.YTProgressBar.Value = value;
+            DownloadPercent = $"{value} % Complete";
         }
 
         private static string RemoveIllegalPathCharacters(string path)
