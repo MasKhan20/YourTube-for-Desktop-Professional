@@ -114,6 +114,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters\IntToPercent.cs" />
     <Compile Include="Models\ConstModel.cs" />
     <Compile Include="Models\FolderExtension.cs" />
     <Compile Include="Services\Converter.cs" />

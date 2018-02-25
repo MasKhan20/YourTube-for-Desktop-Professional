@@ -42,15 +42,6 @@ namespace YourTube_Downloader
             /* Initialize variables */
             this.SizeToContent = SizeToContent.Height;
 
-
-            StatusLabel.Content = "";
-
-            
-            /* Debug */
-#if DEBUG
-            YTVideoID.Text = "https://www.youtube.com/watch?v=ciaEisQ6cdE";
-#endif
-
         }
 
         protected override void OnClosed(EventArgs e)

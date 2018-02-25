@@ -4,9 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:YourTube_Downloader"
+        xmlns:c="clr-namespace:YourTube_Downloader.Converters"
         mc:Ignorable="d"
         Title="YourTube Downloader"
         Height="393" Width="400">
+    <Window.Resources>
+        <ResourceDictionary>
+            <c:IntToPercent x:Key="intToPercentConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
     <Grid Background="{Binding UIBGColor}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -34,12 +40,16 @@
 
 
         <StackPanel Orientation="Vertical" Margin="20,5,20,0" Grid.Row="2">
-            <StackPanel Orientation="Horizontal">
-                <Label Content="Video URL"  FontWeight="Bold" HorizontalAlignment="Stretch" Height="26" VerticalAlignment="Top"/>
-                <CheckBox Content="Multiple links" IsChecked="{Binding MultipleLinks}" VerticalAlignment="Center" Margin="5"/>
-            </StackPanel>
             <Grid>
-                <TextBox Name="YTVideoID" HorizontalAlignment="Stretch" Height="23" VerticalScrollBarVisibility="Visible" VerticalAlignment="Top"/>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Content="Video URL"  FontWeight="Bold" HorizontalAlignment="Stretch" Height="26" VerticalAlignment="Top"/>
+                <CheckBox Content="Multiple links" IsChecked="{Binding MultipleLinks}" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="5"/>
+            </Grid>
+            <Grid>
+                <TextBox Name="YTVideoID" Text="{Binding YTLink}" HorizontalAlignment="Stretch" Height="23" VerticalScrollBarVisibility="Visible" VerticalAlignment="Top"/>
             </Grid>
         </StackPanel>
 
@@ -51,7 +61,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <RadioButton Grid.Column="0" Name="YTVideoFormat" GroupName="Format" Content="Video" IsChecked="True" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <RadioButton Grid.Column="0" Name="YTVideoFormat" GroupName="Format" Content="Video" IsChecked="{Binding YTIsVideo}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 <RadioButton Grid.Column="1" Name="YTAudioFormat" GroupName="Format" Content="Audio" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             </Grid>
         </StackPanel>
@@ -74,12 +84,12 @@
 
         <StackPanel Orientation="Vertical" Grid.Row="5" Margin="20,15,20,0">
             <StackPanel Orientation="Horizontal">
-                <Label Content="Download Status: " FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110"/>
-                <Label Name="StatusLabel" Content="" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="26"/>
+                <Label Content="Status: " FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <Label Name="StatusLabel" Content="{Binding YTStatusLabel}" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="26"/>
             </StackPanel>
             <Grid>
-                <ProgressBar Name="YTProgress" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top"/>
-                <Label Content="{Binding DownloadPercent}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <ProgressBar Name="YTProgress" IsIndeterminate="{Binding IsLoading}" Value="{Binding ProgressValue}" HorizontalAlignment="Stretch" Height="23" VerticalAlignment="Top"/>
+                <Label Content="{Binding LoadedPercent}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </Grid>
         </StackPanel>
 
@@ -89,7 +99,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Name="DownloadButton" Command="{Binding DownloadCommand}" Content="Download" Height="23" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
+            <Button Grid.Column="0" Name="DownloadButton" Command="{Binding DownloadCommand}" IsEnabled="{Binding IsDownloadEnabled}" Content="Download" Height="23" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
             <Button Grid.Column="1" Name="ViewLog" Content="View Log" Command="{Binding ViewLogCommand}" Height="23" HorizontalAlignment="Left" Margin="5,0,0,0" VerticalAlignment="Top" Width="75"/>
         </Grid>
     </Grid>
